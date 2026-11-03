@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>OpenMontage Mobile — Studio Video Android</title>
+  <meta name="description" content="Studio produksi video otomatis berbasis Android. Buat video promosi, naskah, dan storyboard tanpa biaya.">
+  <meta name="theme-color" content="#0B0E17">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- App Container -->
+  <div id="app" class="app-layout">
+    
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="logo-icon">🎬</div>
+        <div class="brand-text">
+          <h1>OpenMontage <span class="badge">Mobile</span></h1>
+          <p class="tagline" id="current-project-label">Proyek: Baru</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-install-pwa" class="btn btn-sm btn-outline hidden" title="Install Aplikasi">
+          📲 Install
+        </button>
+        <span id="status-offline-indicator" class="status-pill status-online" title="Status Jaringan">
+          ● Online
+        </span>
+      </div>
+    </header>
+
+    <!-- Main View Area (Switched by Tabs) -->
+    <main class="main-content">
+      
+      <!-- ========================================== -->
+      <!-- TAB 1: DASHBOARD & DAFTAR PROYEK           -->
+      <!-- ========================================== -->
+      <section id="view-dashboard" class="view-panel active">
+        <div class="section-hero">
+          <div class="hero-card">
+            <h2>Studio Video Android</h2>
+            <p>Produksi video promosi vertikal 9:16 untuk Reels, TikTok, & Shorts tanpa PC, tanpa biaya (Rp0).</p>
+            <div class="hero-actions">
+              <button id="btn-dash-new-project" class="btn btn-primary btn-block">
+                ➕ Proyek Video Baru
+              </button>
+              <button id="btn-dash-myrep-quick" class="btn btn-secondary btn-block">
+                ⚡ Template Promosi MyRepublic WiFi
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h3>Daftar Proyek Tersimpan</h3>
+          <span class="badge" id="project-count-badge">0 Proyek</span>
+        </div>
+
+        <div id="projects-list-container" class="projects-grid">
+          <!-- Populated by JavaScript -->
+          <div class="empty-state">
+            <div class="empty-icon">📁</div>
+            <h4>Belum Ada Proyek</h4>
+            <p>Mulai dengan membuat proyek baru atau gunakan template cepat.</p>
+          </div>
+        </div>
+
+        <div class="device-spec-card">
+          <h4>💡 Tips Performa HP Android</h4>
+          <ul>
+            <li>Gunakan resolusi <strong>540p</strong> jika RAM HP 2GB–3GB agar proses render cepat.</li>
+            <li>Gunakan resolusi <strong>720p</strong> untuk kualitas terbaik di Instagram Reels & TikTok.</li>
+            <li>Seluruh video disimpan dan dirender lokal pada perangkat Anda (tanpa kuota internet).</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: SCRIPT ASSISTANT & MYREPUBLIC       -->
+      <!-- ========================================== -->
+      <section id="view-script" class="view-panel">
+        <div class="subtabs-bar">
+          <button class="subtab-btn active" data-subtab="script-myrep">📡 MyRepublic Studio</button>
+          <button class="subtab-btn" data-subtab="script-templates">📋 Template Umum</button>
+          <button class="subtab-btn" data-subtab="script-manual">✏️ Naskah Manual</button>
+          <button class="subtab-btn" data-subtab="script-booster">🚀 Booster Hook & CTA</button>
+        </div>
+
+        <!-- Subtab A: MyRepublic Promotion Studio -->
+        <div id="subtab-script-myrep" class="subtab-content active">
+          <div class="card card-accent-border">
+            <div class="card-title-row">
+              <h3>MyRepublic WiFi Promotion Studio</h3>
+              <span class="badge badge-purple">Auto 5-Scene</span>
+            </div>
+            <p class="card-desc text-warning">
+              ⚠️ <em>Perhatian: Semua data harga, kecepatan, dan promo harus diisi sesuai penawaran resmi yang valid. Jangan mengarang informasi palsu.</em>
+            </p>
+
+            <div class="form-group">
+              <label for="myrep-sales-name">Nama Sales / Agen *</label>
+              <input type="text" id="myrep-sales-name" class="form-input" placeholder="Contoh: Rian - MyRepublic Official">
+            </div>
+
+            <div class="form-group">
+              <label for="myrep-sales-phone">Nomor WhatsApp / Kontak *</label>
+              <input type="tel" id="myrep-sales-phone" class="form-input" placeholder="Contoh: 0812-XXXX-XXXX">
+            </div>
+
+            <div class="form-group">
+              <label for="myrep-area">Area / Kota Layanan *</label>
+              <input type="text" id="myrep-area" class="form-input" placeholder="Contoh: Jakarta & Sekitarnya / Surabaya">
+            </div>
+
+            <div class="form-group">
+              <label for="myrep-package-tier">Nama Paket & Kecepatan Resmi *</label>
+              <input type="text" id="myrep-package-tier" class="form-input" placeholder="Contoh: Paket 50 Mbps (sesuai penawaran resmi)" required>
+              <small class="text-muted">Wajib diisi sesuai brosur/paket resmi terbaru MyRepublic.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="myrep-price">Biaya / Harga Promo Bulanan Resmi (Rp) *</label>
+              <input type="text" id="myrep-price" class="form-input" placeholder="Contoh: Rp 2xx.xxx/bln (sesuai tarif resmi terkini)" required>
+            </div>
+
+            <div class="form-group">
+              <label for="myrep-special-promo">Promo Tambahan Resmi yang Berlaku *</label>
+              <input type="text" id="myrep-special-promo" class="form-input" placeholder="Contoh: Gratis Instalasi / Promo Cashback (jika ada)">
+            </div>
+
+            <div class="form-group">
+              <label for="myrep-usp">Keunggulan Layanan yang Ingin Ditonjolkan *</label>
+              <input type="text" id="myrep-usp" class="form-input" placeholder="Contoh: 100% Full Fiber Optic Simetris 1:1, Tanpa FUP" value="100% Fiber Optic Simetris 1:1 Tanpa FUP">
+            </div>
+
+            <button id="btn-generate-myrep-video" class="btn btn-primary btn-block btn-lg">
+              🚀 Buat Video & Storyboard MyRepublic
+            </button>
+          </div>
+        </div>
+
+        <!-- Subtab B: Template Umum -->
+        <div id="subtab-script-templates" class="subtab-content">
+          <div class="card">
+            <h3>Pilih Template Naskah</h3>
+            <p class="card-desc">Pilih jenis video untuk otomatis membuat naskah dan 5 scene.</p>
+
+            <div class="form-group">
+              <label for="tpl-category">Kategori Video</label>
+              <select id="tpl-category" class="form-select">
+                <option value="promo">Promosi Produk / Jasa</option>
+                <option value="edukasi">Edukasi & Tips Cepat</option>
+                <option value="story">Storytelling & Solusi Masalah</option>
+                <option value="flashsale">Promo Kilat / Flash Sale</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tpl-product-name">Nama Produk / Topik</label>
+              <input type="text" id="tpl-product-name" class="form-input" placeholder="Contoh: Sepatu Sneakers Aerostep">
+            </div>
+
+            <div class="form-group">
+              <label for="tpl-target-audience">Target Audiens</label>
+              <input type="text" id="tpl-target-audience" class="form-input" placeholder="Contoh: Mahasiswa & Pekerja Kantoran">
+            </div>
+
+            <div class="form-group">
+              <label for="tpl-problem">Masalah Utama yang Dihadapi</label>
+              <input type="text" id="tpl-problem" class="form-input" placeholder="Contoh: Kaki cepat pegal saat seharian jalan">
+            </div>
+
+            <div class="form-group">
+              <label for="tpl-solution">Solusi / Keunggulan</label>
+              <input type="text" id="tpl-solution" class="form-input" placeholder="Contoh: Sol busa membal super empuk dan ringan">
+            </div>
+
+            <div class="form-group">
+              <label for="tpl-offer">Penawaran & Ajakan (CTA)</label>
+              <input type="text" id="tpl-offer" class="form-input" placeholder="Contoh: Diskon 40% khusus hari ini, klik link di bio!">
+            </div>
+
+            <button id="btn-generate-template" class="btn btn-primary btn-block">
+              ✨ Buat Naskah Otomatis
+            </button>
+          </div>
+        </div>
+
+        <!-- Subtab C: Naskah Manual -->
+        <div id="subtab-script-manual" class="subtab-content">
+          <div class="card">
+            <div class="card-title-row">
+              <h3>Editor Naskah Manual</h3>
+              <span id="script-counter" class="badge">0 Kata • ~0 detik</span>
+            </div>
+            <p class="card-desc">Tulis naskah lengkap Anda di bawah ini, lalu klik tombol untuk memecahnya menjadi 5 scene.</p>
+
+            <div class="form-group">
+              <label for="manual-script-text">Isi Naskah Video</label>
+              <textarea id="manual-script-text" class="form-textarea" rows="8" placeholder="Tuliskan naskah video Anda di sini..."></textarea>
+            </div>
+
+            <div class="action-buttons-row">
+              <button id="btn-parse-to-scenes" class="btn btn-primary btn-block">
+                ➡️ Jadikan 5 Scene Storyboard
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subtab D: Booster Hooks & CTA -->
+        <div id="subtab-script-booster" class="subtab-content">
+          <div class="card">
+            <h3>⚡ Generator Hook Viral</h3>
+            <p class="card-desc">Pilih hook menarik untuk scene pertama video Anda.</p>
+            <div class="hooks-list" id="hooks-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>🎯 Generator Call to Action (CTA)</h3>
+            <p class="card-desc">Pilih ajakan bertindak kuat untuk scene penutup video.</p>
+            <div class="cta-list" id="cta-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: STORYBOARD & 5-SCENE EDITOR         -->
+      <!-- ========================================== -->
+      <section id="view-storyboard" class="view-panel">
+        <div class="storyboard-header-bar">
+          <div class="header-info">
+            <h2>Storyboard 5 Scene</h2>
+            <p class="duration-badge">Total Durasi: <span id="total-duration-label">15s</span></p>
+          </div>
+          <button id="btn-preview-canvas-now" class="btn btn-accent btn-sm">
+            ▶ Lihat Preview
+          </button>
+        </div>
+
+        <!-- 5 Scenes Container -->
+        <div id="scenes-editor-container" class="scenes-list">
+          <!-- Populated by JS for Scenes 1 to 5 -->
+        </div>
+
+        <div class="storyboard-actions-footer">
+          <button id="btn-save-project-storyboard" class="btn btn-secondary btn-block">
+            💾 Simpan Proyek ke HP
+          </button>
+          <button id="btn-proceed-to-render" class="btn btn-primary btn-block">
+            📹 Lanjut ke Render Video
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 4: PREVIEW & VIDEO RENDERER            -->
+      <!-- ========================================== -->
+      <section id="view-render" class="view-panel">
+        <div class="renderer-container">
+          
+          <!-- Canvas 9:16 Display Frame -->
+          <div class="canvas-viewport-wrapper">
+            <div class="canvas-frame">
+              <canvas id="video-canvas" width="540" height="960"></canvas>
+              <div id="canvas-overlay-watermark" class="canvas-watermark">OpenMontage</div>
+            </div>
+          </div>
+
+          <!-- Playback Controls -->
+          <div class="playback-controls-card">
+            <div class="playback-timeline">
+              <span id="playback-timecode" class="timecode">00:00 / 00:15</span>
+              <div class="timeline-bar-wrapper">
+                <div id="playback-progress-bar" class="timeline-progress" style="width: 0%;"></div>
+              </div>
+              <span id="playback-current-scene-badge" class="badge">Scene 1/5</span>
+            </div>
+
+            <div class="playback-btn-row">
+              <button id="btn-rewind" class="btn btn-icon btn-secondary" title="Kembali ke Awal">⏮</button>
+              <button id="btn-play-pause" class="btn btn-icon btn-primary btn-play-large" title="Putar / Jeda">▶</button>
+              <button id="btn-loop-toggle" class="btn btn-icon btn-secondary active-toggle" title="Ulang Otomatis">🔁</button>
+            </div>
+          </div>
+
+          <!-- Export Settings Card -->
+          <div class="card render-settings-card">
+            <h3>⚙️ Pengaturan Render Video</h3>
+
+            <div class="form-group">
+              <label for="render-resolution">Resolusi Video Vertikal (9:16)</label>
+              <select id="render-resolution" class="form-select">
+                <option value="540p" selected>540p (540 x 960) — Sangat Cepat & Aman untuk HP Entry</option>
+                <option value="720p">720p (720 x 1280) — HD Standar TikTok & IG Reels (Direkomendasikan)</option>
+                <option value="1080p">1080p (1080 x 1920) — Full HD Maksimal (Butuh HP Spek Tinggi)</option>
+              </select>
+            </div>
+
+            <div class="codec-info-row">
+              <span class="info-label">Format File:</span>
+              <span class="badge badge-cyan" id="detected-mime-badge">WebM (VP8/VP9 Hardware)</span>
+            </div>
+            <p class="text-muted small">
+              *Format WebM langsung kompatibel dengan browser HP, WhatsApp, Google Drive, TikTok, dan YouTube.
+            </p>
+
+            <button id="btn-start-render" class="btn btn-primary btn-block btn-lg btn-render-pulse">
+              🔴 Mulai Render Video (WebM)
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 5: EXPORT CENTER                       -->
+      <!-- ========================================== -->
+      <section id="view-export" class="view-panel">
+        <div class="section-hero">
+          <h2>Export Center</h2>
+          <p>Unduh berbagai format output untuk keperluan promosi media sosial Anda.</p>
+        </div>
+
+        <div class="export-cards-grid">
+          
+          <!-- Subtitle SRT Card -->
+          <div class="export-card">
+            <div class="export-icon">📝</div>
+            <div class="export-info">
+              <h4>Subtitle SRT (.srt)</h4>
+              <p>Tersinkronisasi otomatis dengan durasi setiap scene untuk caption Reels/TikTok.</p>
+            </div>
+            <button id="btn-export-srt" class="btn btn-secondary btn-sm">
+              📥 Unduh SRT
+            </button>
+          </div>
+
+          <!-- Naskah TXT Card -->
+          <div class="export-card">
+            <div class="export-icon">📄</div>
+            <div class="export-info">
+              <h4>Naskah Lengkap (.txt)</h4>
+              <p>Format teks lengkap dengan breakdown 5 scene dan catatan audio.</p>
+            </div>
+            <button id="btn-export-txt" class="btn btn-secondary btn-sm">
+              📥 Unduh TXT
+            </button>
+          </div>
+
+          <!-- Storyboard JSON Backup Card -->
+          <div class="export-card">
+            <div class="export-icon">💾</div>
+            <div class="export-info">
+              <h4>Cadangan Proyek (.json)</h4>
+              <p>Cadangkan data proyek untuk disimpan atau dibuka di perangkat lain.</p>
+            </div>
+            <button id="btn-export-json" class="btn btn-secondary btn-sm">
+              📥 Unduh JSON
+            </button>
+          </div>
+
+          <!-- Social Media Caption Card -->
+          <div class="card caption-export-card">
+            <div class="card-title-row">
+              <h4>Caption & Hashtag Media Sosial</h4>
+              <button id="btn-copy-caption" class="btn btn-sm btn-outline">📋 Salin Teks</button>
+            </div>
+            <textarea id="export-caption-area" class="form-textarea" rows="6" readonly></textarea>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar for Android Mobile -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">📁</span>
+        <span class="nav-label">Proyek</span>
+      </button>
+      <button class="nav-item" data-view="script">
+        <span class="nav-icon">✍️</span>
+        <span class="nav-label">Naskah</span>
+      </button>
+      <button class="nav-item" data-view="storyboard">
+        <span class="nav-icon">🎬</span>
+        <span class="nav-label">Scene</span>
+      </button>
+      <button class="nav-item" data-view="render">
+        <span class="nav-icon">📹</span>
+        <span class="nav-label">Render</span>
+      </button>
+      <button class="nav-item" data-view="export">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Ekspor</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Render Progress Modal Overlay -->
+  <div id="render-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-render-title">Sedang Merender Video...</h3>
+      </div>
+      
+      <div class="modal-body">
+        <div class="render-progress-wrapper">
+          <div class="progress-bar-bg">
+            <div id="modal-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          <div class="progress-labels">
+            <span id="modal-progress-percent">0%</span>
+            <span id="modal-progress-scene">Scene 1 dari 5</span>
+          </div>
+        </div>
+
+        <p id="modal-render-status-desc" class="status-tip">
+          Mohon jangan menutup aplikasi selama proses perekaman canvas berlangsung.
+        </p>
+
+        <!-- Video Preview on Complete -->
+        <div id="modal-render-result" class="render-result-section hidden">
+          <video id="rendered-video-preview" controls playsinline class="rendered-video-tag"></video>
+          <div class="render-details-row">
+            <span id="rendered-file-size" class="badge">0 KB</span>
+            <span id="rendered-file-res" class="badge">720x1280</span>
+          </div>
+          <button id="btn-download-rendered-webm" class="btn btn-primary btn-block btn-lg">
+            📥 Unduh Video WebM
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-cancel-render" class="btn btn-outline btn-block">
+          Batalkan Render
+        </button>
+        <button id="btn-close-render-modal" class="btn btn-secondary btn-block hidden">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Toast Notification Element -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Script -->
+  <script src="app.js"></script>
+</body>
+</html>

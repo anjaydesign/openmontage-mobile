@@ -1,0 +1,26 @@
+{
+  "name": "OpenMontage Mobile",
+  "short_name": "OpenMontage",
+  "description": "Studio Produksi Video Otomatis Berbasis Android (100% Gratis, Tanpa API Berbayar, Offline Ready)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0E17",
+  "theme_color": "#6366F1",
+  "categories": ["video", "productivity", "multimedia"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
