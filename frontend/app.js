@@ -631,10 +631,27 @@ function renderStoryboardScenes() {
           </div>
         </div>
 
-        <!-- Text Input -->
+        <!-- Text Input with Character Counter -->
         <div class="form-group">
-          <label>Teks Headline / Narasi Scene</label>
-          <textarea class="form-textarea scene-text-input" rows="2" data-prop="text">${escapeHtml(scene.text)}</textarea>
+          <div class="scene-text-label-row">
+            <label>Teks Headline / Narasi Scene</label>
+            <span class="char-count" id="char-count-${index}">${(scene.text || '').length} karakter</span>
+          </div>
+          <textarea class="form-textarea scene-text-input" rows="2" data-prop="text">${escapeHtml(scene.text || '')}</textarea>
+        </div>
+
+        <!-- AI Assistant Toolbar per Scene -->
+        <div class="scene-ai-bar">
+          <div class="scene-ai-bar-title">
+            <span class="ai-sparkle">✨</span> <strong>Bantuan AI Scene ${index + 1}:</strong>
+          </div>
+          <div class="scene-ai-chips">
+            <button type="button" class="btn-ai-chip btn-ai-quick-hook" data-index="${index}" title="Jadikan Hook Viral Memikat">⚡ Hook</button>
+            <button type="button" class="btn-ai-chip btn-ai-quick-shorten" data-index="${index}" title="Persingkat Teks Pas Layar 9:16">🎯 Padatkan</button>
+            <button type="button" class="btn-ai-chip btn-ai-quick-cta" data-index="${index}" title="Jadikan Ajakan Bertindak">🛒 CTA</button>
+            <button type="button" class="btn-ai-chip btn-ai-quick-autostyle" data-index="${index}" title="Pilih Animasi & Desain Otomatis">🎨 Auto-Style</button>
+            <button type="button" class="btn-ai-chip btn-ai-open-modal" data-index="${index}" title="Buka Asisten AI Lengkap">💬 Asisten AI...</button>
+          </div>
         </div>
 
         <!-- Typography & Alignment Controls -->
@@ -697,9 +714,33 @@ function renderStoryboardScenes() {
       dbSaveProject(currentProject);
     });
 
-    sceneCard.querySelector('.scene-text-input').addEventListener('input', (e) => {
+    const textInput = sceneCard.querySelector('.scene-text-input');
+    const charCounter = sceneCard.querySelector(`#char-count-${index}`);
+    textInput.addEventListener('input', (e) => {
       currentProject.scenes[index].text = e.target.value;
+      if (charCounter) charCounter.textContent = `${e.target.value.length} karakter`;
       dbSaveProject(currentProject);
+    });
+
+    // Quick AI Actions per Scene
+    sceneCard.querySelector('.btn-ai-quick-hook').addEventListener('click', () => {
+      triggerQuickAiAction(index, 'hook');
+    });
+
+    sceneCard.querySelector('.btn-ai-quick-shorten').addEventListener('click', () => {
+      triggerQuickAiAction(index, 'shorten');
+    });
+
+    sceneCard.querySelector('.btn-ai-quick-cta').addEventListener('click', () => {
+      triggerQuickAiAction(index, 'cta');
+    });
+
+    sceneCard.querySelector('.btn-ai-quick-autostyle').addEventListener('click', () => {
+      applyAiStyleRecommendationToScene(index);
+    });
+
+    sceneCard.querySelector('.btn-ai-open-modal').addEventListener('click', () => {
+      openAiSceneModal(index);
     });
 
     sceneCard.querySelectorAll('select').forEach(sel => {
@@ -724,7 +765,6 @@ function renderStoryboardScenes() {
       reader.onload = (uploadEvent) => {
         const dataUrl = uploadEvent.target.result;
         currentProject.scenes[index].imageDataUrl = dataUrl;
-        // Pre-cache image for canvas
         preloadImage(dataUrl);
         dbSaveProject(currentProject).then(() => {
           showToast(`✅ Gambar Scene ${index + 1} berhasil dimuat`);
@@ -1495,6 +1535,794 @@ function updateProjectHeaderLabel() {
 // 11. INITIALIZATION & GLOBAL LISTENERS
 // ============================================================================
 
+
+// ============================================================================
+// AI SCENE ASSISTANT & 5-SCENE STORYBOARD GENERATOR
+// ============================================================================
+
+let currentModalSceneIndex = 0;
+let currentModalAiSuggestion = '';
+let currentModalStyleRec = null;
+let currentModalActionType = 'hook';
+let aiVariantCounters = {};
+
+function cleanBaseText(text) {
+  if (!text) return '';
+  return text
+    .replace(/^scene\s*\d+\s*[:\-]\s*/i, '')
+    .replace(/^(halo|hai|selamat datang|perkenalkan|video ini|halo semuanya|guys)\s*[,!:\-]?\s*/i, '')
+    .trim();
+}
+
+function generateSceneHook(text, variant = 0) {
+  const clean = cleanBaseText(text) || 'rahasia sukses yang wajib kamu tahu';
+  const hooks = [
+    `Stop scrolling! 🛑 ${clean}`,
+    `Kalian masih sering ngalamin ini? 😱 ${clean}`,
+    `Jarang ada yang tahu rahasia ini: ${clean} 🔥`,
+    `Jangan sampai nyesel, tonton sampai habis! ⚠️ ${clean}`,
+    `Ini alasan kenapa kamu wajib tahu: ${clean} ✨`,
+    `Bongkar trik yang jarang dibahas: ${clean} 🚀`,
+    `Ternyata ini penyebabnya! 💡 ${clean}`
+  ];
+  return hooks[Math.abs(variant) % hooks.length];
+}
+
+function generateSceneShorten(text) {
+  let clean = cleanBaseText(text) || text || 'Pesan penting untuk Anda';
+  clean = clean
+    .replace(/\b(adalah|merupakan|yang mana|di mana|mungkin saja|bisa dibilang|seperti yang kita tahu)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const words = clean.split(' ');
+  if (words.length > 5) {
+    const mid = Math.ceil(words.length / 2);
+    return words.slice(0, mid).join(' ') + '\n' + words.slice(mid).join(' ');
+  }
+  return clean;
+}
+
+function generateSceneCTA(text, variant = 0) {
+  const ctas = [
+    `Yuk amankan sekarang sebelum kehabisan! Klik link di bio 📲`,
+    `Mau info & promo lebih lengkap? Hubungi via WhatsApp sekarang! 💬`,
+    `Jangan tunda lagi, buktikan sendiri hari ini juga! 🔥`,
+    `Save video ini biar nggak lupa & share ke teman kamu ya! 📌`,
+    `Ketik "MAU" di kolom komentar untuk dapatkan promo spesial! 👇`,
+    `Stok terbatas! Pesan sekarang juga sebelum kehabisan ⚡`
+  ];
+  return ctas[Math.abs(variant) % ctas.length];
+}
+
+function recommendSceneStyle(text, hasImage) {
+  const lower = (text || '').toLowerCase();
+
+  if (hasImage) {
+    return {
+      animation: 'ken-burns',
+      animLabel: 'Zoom Perlahan (Ken Burns)',
+      textPosition: 'bottom',
+      posLabel: 'Bawah (Beri ruang gambar)',
+      fontSize: 'md',
+      sizeLabel: 'Sedang',
+      bgColor: 'midnight',
+      bgLabel: 'Midnight Dark',
+      reason: 'Gambar terdeteksi — teks diposisikan di bawah dengan animasi Ken Burns sinematik.'
+    };
+  }
+
+  if (/(promo|diskon|hemat|terbatas|sekarang|cepet|hari ini|flash sale|cashback|murah|gratis)/.test(lower)) {
+    return {
+      animation: 'bounce',
+      animLabel: 'Membal Dinamis (Bounce)',
+      textPosition: 'center',
+      posLabel: 'Tengah',
+      fontSize: 'xl',
+      sizeLabel: 'Ekstra Besar',
+      bgColor: 'sunset',
+      bgLabel: 'Sunset Red',
+      reason: 'Pesan urgensi / promo terdeteksi — efek membal enerjik dengan latar merah.'
+    };
+  }
+
+  if (/(stop|jangan|kenapa|tahu|rahasia|bisa|awas|penasaran|siapa|apa)/.test(lower)) {
+    return {
+      animation: 'slide-up',
+      animLabel: 'Geser dari Bawah (Slide Up)',
+      textPosition: 'center',
+      posLabel: 'Tengah',
+      fontSize: 'lg',
+      sizeLabel: 'Besar',
+      bgColor: 'neon-purple',
+      bgLabel: 'Neon Purple',
+      reason: 'Hook / pemantik rasa penasaran — animasi slide-up dan warna ungu neon untuk menahan scrolling.'
+    };
+  }
+
+  if (/(hubungi|wa|whatsapp|klik|bio|dm|order|pesan|chat|info)/.test(lower)) {
+    return {
+      animation: 'slide-left',
+      animLabel: 'Geser dari Kiri (Slide Left)',
+      textPosition: 'bottom',
+      posLabel: 'Bawah',
+      fontSize: 'lg',
+      sizeLabel: 'Besar',
+      bgColor: 'emerald',
+      bgLabel: 'Emerald Green',
+      reason: 'Ajakan aksi (CTA) terdeteksi — warna hijau konversi dan posisi bawah agar mudah dibaca.'
+    };
+  }
+
+  if (/(tips|cara|solusi|metode|rahasia|langkah|panduan|edukasi)/.test(lower)) {
+    return {
+      animation: 'slide-up',
+      animLabel: 'Geser dari Bawah (Slide Up)',
+      textPosition: 'center',
+      posLabel: 'Tengah',
+      fontSize: 'md',
+      sizeLabel: 'Sedang',
+      bgColor: 'cyber-cyan',
+      bgLabel: 'Cyber Cyan',
+      reason: 'Konten edukasi/tips — warna cyan modern dan teks terpusat.'
+    };
+  }
+
+  return {
+    animation: 'fade',
+    animLabel: 'Pudar Masuk (Fade)',
+    textPosition: 'center',
+    posLabel: 'Tengah',
+    fontSize: 'lg',
+    sizeLabel: 'Besar',
+    bgColor: 'royal',
+    bgLabel: 'Royal Indigo',
+    reason: 'Gaya visual seimbang dan elegan untuk narasi umum.'
+  };
+}
+
+function generate5ScenesFromTopic(topic, niche, tone) {
+  const clean = cleanBaseText(topic) || 'Produk Unggulan Kami';
+
+  if (niche === 'edukasi') {
+    return [
+      {
+        id: 1,
+        duration: 3,
+        text: `Banyak yang salah kaprah soal ini! ⚠️\nSimak rahasia ${clean}:`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-up',
+        bgColor: 'midnight',
+        imageDataUrl: null
+      },
+      {
+        id: 2,
+        duration: 3,
+        text: `Faktanya, sebagian besar orang gagal karena lewatkan langkah dasar ini. 🤦‍♂️`,
+        fontFamily: 'sans-serif',
+        fontSize: 'md',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'fade',
+        bgColor: 'royal',
+        imageDataUrl: null
+      },
+      {
+        id: 3,
+        duration: 3,
+        text: `Kuncinya adalah: fokus pada ${clean} secara terarah! 💡`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-left',
+        bgColor: 'cyber-cyan',
+        imageDataUrl: null
+      },
+      {
+        id: 4,
+        duration: 3,
+        text: `Hasilnya? Proses 2x lebih cepat & bebas dari kesalahan fatal. 🚀`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'bounce',
+        bgColor: 'neon-purple',
+        imageDataUrl: null
+      },
+      {
+        id: 5,
+        duration: 3,
+        text: `Save video ini biar nggak lupa & follow untuk tips lainnya! 📌`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'bottom',
+        animation: 'slide-up',
+        bgColor: 'midnight',
+        imageDataUrl: null
+      }
+    ];
+  } else if (niche === 'kuliner') {
+    return [
+      {
+        id: 1,
+        duration: 3,
+        text: `Pecinta kuliner wajib merapat! 🤤\nMenu yang satu ini lagi viral banget:`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'bounce',
+        bgColor: 'sunset',
+        imageDataUrl: null
+      },
+      {
+        id: 2,
+        duration: 3,
+        text: `Cobain nikmatnya ${clean} dengan cita rasa otentik yang bikin nagih! 🔥`,
+        fontFamily: 'sans-serif',
+        fontSize: 'md',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'fade',
+        bgColor: 'royal',
+        imageDataUrl: null
+      },
+      {
+        id: 3,
+        duration: 3,
+        text: `Bahan segar pilihan & bumbu meresap sempurna sampai gigitan terakhir. ✨`,
+        fontFamily: 'sans-serif',
+        fontSize: 'md',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-left',
+        bgColor: 'neon-purple',
+        imageDataUrl: null
+      },
+      {
+        id: 4,
+        duration: 3,
+        text: `Porsi puas, rasa juara, dan harga bersahabat di kantong! 💯`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'fade',
+        bgColor: 'emerald',
+        imageDataUrl: null
+      },
+      {
+        id: 5,
+        duration: 3,
+        text: `Yuk langsung order online atau mampir sekarang juga! 🛵📲`,
+        fontFamily: 'sans-serif',
+        fontSize: 'xl',
+        textColor: '#FFFFFF',
+        textPosition: 'bottom',
+        animation: 'slide-up',
+        bgColor: 'sunset',
+        imageDataUrl: null
+      }
+    ];
+  } else if (niche === 'storytelling') {
+    return [
+      {
+        id: 1,
+        duration: 3,
+        text: `Dulu aku sempat bingung banget...\nSampai akhirnya nemu titik balik ini: 🥺`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'fade',
+        bgColor: 'midnight',
+        imageDataUrl: null
+      },
+      {
+        id: 2,
+        duration: 3,
+        text: `Tiap hari capek nyari cara yang beneran ampuh tapi nihil hasil. 🤦‍♂️`,
+        fontFamily: 'sans-serif',
+        fontSize: 'md',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-up',
+        bgColor: 'royal',
+        imageDataUrl: null
+      },
+      {
+        id: 3,
+        duration: 3,
+        text: `Semua berubah waktu mulai kenal & coba ${clean}! 💡`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'bounce',
+        bgColor: 'neon-purple',
+        imageDataUrl: null
+      },
+      {
+        id: 4,
+        duration: 3,
+        text: `Nggak nyangka efeknya secepat ini, hasilnya nyata dan bikin lega. ✨`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-left',
+        bgColor: 'cyber-cyan',
+        imageDataUrl: null
+      },
+      {
+        id: 5,
+        duration: 3,
+        text: `Kamu juga bisa! Mulai langkah pertamamu hari ini bareng kami 📲`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'bottom',
+        animation: 'slide-up',
+        bgColor: 'emerald',
+        imageDataUrl: null
+      }
+    ];
+  } else if (niche === 'jasa') {
+    return [
+      {
+        id: 1,
+        duration: 3,
+        text: `Capek ngurus sendiri tapi hasilnya kurang puas? 🤯\nSerahkan ke ahlinya!`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'bounce',
+        bgColor: 'sunset',
+        imageDataUrl: null
+      },
+      {
+        id: 2,
+        duration: 3,
+        text: `Waktu terbuang sia-sia dan biaya bengkak tanpa hasil jelas. 📉`,
+        fontFamily: 'sans-serif',
+        fontSize: 'md',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'fade',
+        bgColor: 'midnight',
+        imageDataUrl: null
+      },
+      {
+        id: 3,
+        duration: 3,
+        text: `Layanan ${clean} kami siap bantu tuntaskan sampai beres! 🚀`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-left',
+        bgColor: 'royal',
+        imageDataUrl: null
+      },
+      {
+        id: 4,
+        duration: 3,
+        text: `Dikerjakan tim profesional, proses transparan & bergaransi puas! 🤝`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-up',
+        bgColor: 'neon-purple',
+        imageDataUrl: null
+      },
+      {
+        id: 5,
+        duration: 3,
+        text: `Konsultasi gratis sekarang! Klik tombol kontak di profil 📲`,
+        fontFamily: 'sans-serif',
+        fontSize: 'xl',
+        textColor: '#FFFFFF',
+        textPosition: 'bottom',
+        animation: 'bounce',
+        bgColor: 'emerald',
+        imageDataUrl: null
+      }
+    ];
+  } else {
+    // Default: promo / sales
+    return [
+      {
+        id: 1,
+        duration: 3,
+        text: `Stop scrolling! 🛑\nMasih bingung cari solusi buat ${clean}?`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'bounce',
+        bgColor: 'sunset',
+        imageDataUrl: null
+      },
+      {
+        id: 2,
+        duration: 3,
+        text: `Jangan buang waktu dan biaya mahal untuk hal yang nggak pasti! ⚠️`,
+        fontFamily: 'sans-serif',
+        fontSize: 'md',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-up',
+        bgColor: 'midnight',
+        imageDataUrl: null
+      },
+      {
+        id: 3,
+        duration: 3,
+        text: `Kenalkan: ${clean} dengan kualitas terbaik dan terpercaya! ✨`,
+        fontFamily: 'sans-serif',
+        fontSize: 'lg',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'slide-left',
+        bgColor: 'royal',
+        imageDataUrl: null
+      },
+      {
+        id: 4,
+        duration: 3,
+        text: `Spesial hari ini! Ada diskon eksklusif & bonus tambahan 🔥`,
+        fontFamily: 'sans-serif',
+        fontSize: 'xl',
+        textColor: '#FFFFFF',
+        textPosition: 'center',
+        animation: 'bounce',
+        bgColor: 'neon-purple',
+        imageDataUrl: null
+      },
+      {
+        id: 5,
+        duration: 3,
+        text: `Slot terbatas! Klik link di bio atau WhatsApp kami sekarang 📲`,
+        fontFamily: 'sans-serif',
+        fontSize: 'xl',
+        textColor: '#FFFFFF',
+        textPosition: 'bottom',
+        animation: 'slide-up',
+        bgColor: 'emerald',
+        imageDataUrl: null
+      }
+    ];
+  }
+}
+
+async function callGeminiIfAvailable(prompt) {
+  const apiKey = localStorage.getItem('om_gemini_api_key');
+  if (!apiKey || !navigator.onLine) {
+    return null;
+  }
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: `Kamu adalah asisten copywriter video pendek (Reels/TikTok/Shorts) bahasa Indonesia. Jawab secara padat (maksimal 1-2 kalimat singkat, tanpa tanda petik, tanpa basa-basi). ${prompt}` }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 80
+        }
+      })
+    });
+
+    if (!res.ok) {
+      console.warn('[AI] Gemini API error status:', res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    const candidate = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (candidate) {
+      return candidate.trim();
+    }
+  } catch (err) {
+    console.warn('[AI] Gemini network error:', err);
+  }
+  return null;
+}
+
+function triggerQuickAiAction(sceneIndex, actionType) {
+  const scene = currentProject.scenes[sceneIndex];
+  if (!scene) return;
+
+  const key = `${sceneIndex}_${actionType}`;
+  aiVariantCounters[key] = (aiVariantCounters[key] || 0) + 1;
+  const variant = aiVariantCounters[key];
+
+  let newText = '';
+  if (actionType === 'hook') {
+    newText = generateSceneHook(scene.text, variant);
+    showToast(`⚡ AI: Hook viral diterapkan pada Scene ${sceneIndex + 1}`);
+  } else if (actionType === 'shorten') {
+    newText = generateSceneShorten(scene.text);
+    showToast(`🎯 AI: Teks Scene ${sceneIndex + 1} dipadatkan untuk layar 9:16`);
+  } else if (actionType === 'cta') {
+    newText = generateSceneCTA(scene.text, variant);
+    showToast(`🛒 AI: Ajakan aksi (CTA) diterapkan pada Scene ${sceneIndex + 1}`);
+  }
+
+  if (newText) {
+    scene.text = newText;
+    dbSaveProject(currentProject).then(() => {
+      renderStoryboardScenes();
+    });
+  }
+}
+
+function applyAiStyleRecommendationToScene(sceneIndex) {
+  const scene = currentProject.scenes[sceneIndex];
+  if (!scene) return;
+
+  const styleRec = recommendSceneStyle(scene.text, Boolean(scene.imageDataUrl));
+  scene.animation = styleRec.animation;
+  scene.textPosition = styleRec.textPosition;
+  scene.fontSize = styleRec.fontSize;
+  if (!scene.imageDataUrl) {
+    scene.bgColor = styleRec.bgColor;
+  }
+
+  dbSaveProject(currentProject).then(() => {
+    renderStoryboardScenes();
+    showToast(`🎨 AI: Animasi "${styleRec.animLabel}" & posisi "${styleRec.posLabel}" diterapkan!`);
+  });
+}
+
+function openAiSceneModal(sceneIndex) {
+  currentModalSceneIndex = sceneIndex;
+  currentModalActionType = 'hook';
+  const scene = currentProject.scenes[sceneIndex];
+  if (!scene) return;
+
+  document.getElementById('modal-ai-scene-title').textContent = `Bantuan AI untuk Scene ${sceneIndex + 1}`;
+  document.getElementById('modal-ai-original-text').textContent = scene.text || '(Belum ada teks naskah)';
+
+  const defaultHook = generateSceneHook(scene.text, 0);
+  currentModalAiSuggestion = defaultHook;
+  document.getElementById('ai-suggestion-textarea').value = defaultHook;
+
+  currentModalStyleRec = recommendSceneStyle(scene.text, Boolean(scene.imageDataUrl));
+  const styleBox = document.getElementById('ai-style-recommendation');
+  styleBox.innerHTML = `
+    <strong>🎨 Rekomendasi Desain AI:</strong><br>
+    Animasi: <strong>${currentModalStyleRec.animLabel}</strong> | Posisi: <strong>${currentModalStyleRec.posLabel}</strong> | Ukuran: <strong>${currentModalStyleRec.sizeLabel}</strong><br>
+    <small class="text-dim">${currentModalStyleRec.reason}</small>
+  `;
+  styleBox.classList.remove('hidden');
+
+  const geminiKey = localStorage.getItem('om_gemini_api_key');
+  const engineBadge = document.getElementById('ai-engine-badge');
+  if (geminiKey) {
+    engineBadge.textContent = 'Gemini Cloud AI';
+    engineBadge.className = 'badge badge-purple';
+    document.getElementById('ai-gemini-key-input').value = geminiKey;
+  } else {
+    engineBadge.textContent = 'Offline AI (Rp0)';
+    engineBadge.className = 'badge badge-emerald';
+    document.getElementById('ai-gemini-key-input').value = '';
+  }
+
+  document.getElementById('ai-custom-prompt-input').value = '';
+  document.getElementById('scene-ai-modal').classList.add('active');
+}
+
+function closeAiSceneModal() {
+  document.getElementById('scene-ai-modal').classList.remove('active');
+}
+
+function initAiAssistant() {
+  // Toggle 5-Scene Generator Card
+  const toggleBtn = document.getElementById('btn-toggle-ai-generator');
+  const body = document.getElementById('ai-generator-body');
+  const icon = document.getElementById('ai-gen-toggle-icon');
+
+  if (toggleBtn && body && icon) {
+    toggleBtn.addEventListener('click', (e) => {
+      if (e.target.closest('#ai-generator-body')) return;
+      const isCollapsed = body.classList.toggle('collapsed');
+      icon.textContent = isCollapsed ? '▼' : '▲';
+    });
+  }
+
+  // 5-Scene Generator Button
+  const genBtn = document.getElementById('btn-ai-generate-5-scenes');
+  if (genBtn) {
+    genBtn.addEventListener('click', () => {
+      const topic = document.getElementById('ai-global-topic-input').value.trim();
+      const niche = document.getElementById('ai-global-niche-select').value;
+      const tone = document.getElementById('ai-global-tone-select').value;
+
+      if (!topic) {
+        showToast('⚠️ Harap masukkan ide, produk, atau topik video Anda!');
+        document.getElementById('ai-global-topic-input').focus();
+        return;
+      }
+
+      const newScenes = generate5ScenesFromTopic(topic, niche, tone);
+      currentProject.scenes = newScenes;
+      currentProject.name = `Video AI — ${topic.slice(0, 24)}`;
+
+      dbSaveProject(currentProject).then(() => {
+        renderStoryboardScenes();
+        updateProjectHeaderLabel();
+        showToast('✨ 5 Scene berhasil disusun otomatis oleh AI!');
+        if (body) body.classList.add('collapsed');
+        if (icon) icon.textContent = '▼';
+      });
+    });
+  }
+
+  // Modal Actions
+  const btnClose = document.getElementById('btn-close-ai-modal');
+  const btnCancel = document.getElementById('btn-cancel-ai-modal');
+  if (btnClose) btnClose.addEventListener('click', closeAiSceneModal);
+  if (btnCancel) btnCancel.addEventListener('click', closeAiSceneModal);
+
+  // Quick Action cards inside modal
+  document.querySelectorAll('.btn-ai-action-card').forEach(card => {
+    card.addEventListener('click', async () => {
+      const action = card.dataset.action;
+      currentModalActionType = action;
+      const scene = currentProject.scenes[currentModalSceneIndex];
+      if (!scene) return;
+
+      const variant = (aiVariantCounters[`modal_${action}`] = (aiVariantCounters[`modal_${action}`] || 0) + 1);
+
+      if (action === 'hook') {
+        const geminiRes = await callGeminiIfAvailable(`Ubah kalimat ini menjadi hook video pendek yang sangat memikat dan bikin penasaran: "${scene.text}"`);
+        const result = geminiRes || generateSceneHook(scene.text, variant);
+        document.getElementById('ai-suggestion-textarea').value = result;
+      } else if (action === 'shorten') {
+        const geminiRes = await callGeminiIfAvailable(`Persingkat teks ini agar pas dibaca cepat di layar HP vertikal 9:16 (maksimal 8 kata): "${scene.text}"`);
+        const result = geminiRes || generateSceneShorten(scene.text);
+        document.getElementById('ai-suggestion-textarea').value = result;
+      } else if (action === 'cta') {
+        const geminiRes = await callGeminiIfAvailable(`Ubah teks ini menjadi call to action (ajakan bertindak/beli) yang kuat dan persuasif: "${scene.text}"`);
+        const result = geminiRes || generateSceneCTA(scene.text, variant);
+        document.getElementById('ai-suggestion-textarea').value = result;
+      } else if (action === 'autostyle') {
+        currentModalStyleRec = recommendSceneStyle(scene.text, Boolean(scene.imageDataUrl));
+        const styleBox = document.getElementById('ai-style-recommendation');
+        styleBox.innerHTML = `
+          <strong>🎨 Rekomendasi Desain AI:</strong><br>
+          Animasi: <strong>${currentModalStyleRec.animLabel}</strong> | Posisi: <strong>${currentModalStyleRec.posLabel}</strong> | Ukuran: <strong>${currentModalStyleRec.sizeLabel}</strong><br>
+          <small class="text-dim">${currentModalStyleRec.reason}</small>
+        `;
+        showToast('🎨 Rekomendasi gaya & animasi AI diperbarui!');
+      }
+    });
+  });
+
+  // Custom Prompt Submit
+  const submitPromptBtn = document.getElementById('btn-submit-ai-prompt');
+  if (submitPromptBtn) {
+    submitPromptBtn.addEventListener('click', async () => {
+      const prompt = document.getElementById('ai-custom-prompt-input').value.trim();
+      const scene = currentProject.scenes[currentModalSceneIndex];
+      if (!prompt || !scene) return;
+
+      showToast('⏳ AI sedang memproses instruksi...');
+      const geminiRes = await callGeminiIfAvailable(`Teks asli: "${scene.text}". Instruksi perbaikan: "${prompt}". Tulis ulang naskah video pendeknya:`);
+      
+      let finalResult = geminiRes;
+      if (!finalResult) {
+        // Fallback offline rules based on keywords in prompt
+        const pLower = prompt.toLowerCase();
+        if (pLower.includes('emoji')) {
+          finalResult = `🔥 ${cleanBaseText(scene.text)} ✨`;
+        } else if (pLower.includes('santai') || pLower.includes('gaul')) {
+          finalResult = `Gais, kalian wajib coba ini: ${cleanBaseText(scene.text)} 😍`;
+        } else if (pLower.includes('formal') || pLower.includes('baku')) {
+          finalResult = `Solusi terpercaya dengan kualitas unggul: ${cleanBaseText(scene.text)}.`;
+        } else {
+          finalResult = `${prompt}: ${cleanBaseText(scene.text)}`;
+        }
+      }
+
+      document.getElementById('ai-suggestion-textarea').value = finalResult;
+      showToast('✨ AI selesai merespons instruksi Anda');
+    });
+  }
+
+  // Regenerate button
+  const regenBtn = document.getElementById('btn-regenerate-ai');
+  if (regenBtn) {
+    regenBtn.addEventListener('click', () => {
+      const scene = currentProject.scenes[currentModalSceneIndex];
+      if (!scene) return;
+      const variant = (aiVariantCounters[`modal_regen`] = (aiVariantCounters[`modal_regen`] || 0) + 1);
+
+      if (currentModalActionType === 'cta') {
+        document.getElementById('ai-suggestion-textarea').value = generateSceneCTA(scene.text, variant);
+      } else if (currentModalActionType === 'shorten') {
+        document.getElementById('ai-suggestion-textarea').value = generateSceneShorten(scene.text);
+      } else {
+        document.getElementById('ai-suggestion-textarea').value = generateSceneHook(scene.text, variant);
+      }
+      showToast('🔄 Variasi alternatif ditampilkan');
+    });
+  }
+
+  // Apply to Scene Button
+  const applyBtn = document.getElementById('btn-apply-ai-scene');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      const scene = currentProject.scenes[currentModalSceneIndex];
+      if (!scene) return;
+
+      const newText = document.getElementById('ai-suggestion-textarea').value.trim();
+      if (newText) {
+        scene.text = newText;
+      }
+
+      // Apply recommended style if present
+      if (currentModalStyleRec) {
+        scene.animation = currentModalStyleRec.animation;
+        scene.textPosition = currentModalStyleRec.textPosition;
+        scene.fontSize = currentModalStyleRec.fontSize;
+        if (!scene.imageDataUrl) {
+          scene.bgColor = currentModalStyleRec.bgColor;
+        }
+      }
+
+      dbSaveProject(currentProject).then(() => {
+        renderStoryboardScenes();
+        closeAiSceneModal();
+        showToast(`✅ Hasil AI berhasil diterapkan ke Scene ${currentModalSceneIndex + 1}!`);
+      });
+    });
+  }
+
+  // Engine Settings Toggle
+  const btnToggleSettings = document.getElementById('btn-toggle-engine-settings');
+  const settingsPanel = document.getElementById('ai-engine-settings-panel');
+  if (btnToggleSettings && settingsPanel) {
+    btnToggleSettings.addEventListener('click', () => {
+      settingsPanel.classList.toggle('hidden');
+    });
+  }
+
+  // Save Gemini Key
+  const btnSaveKey = document.getElementById('btn-save-ai-key');
+  if (btnSaveKey) {
+    btnSaveKey.addEventListener('click', () => {
+      const key = document.getElementById('ai-gemini-key-input').value.trim();
+      const badge = document.getElementById('ai-engine-badge');
+      if (key) {
+        localStorage.setItem('om_gemini_api_key', key);
+        badge.textContent = 'Gemini Cloud AI';
+        badge.className = 'badge badge-purple';
+        showToast('🔑 Kunci Gemini API berhasil disimpan');
+      } else {
+        localStorage.removeItem('om_gemini_api_key');
+        badge.textContent = 'Offline AI (Rp0)';
+        badge.className = 'badge badge-emerald';
+        showToast('🟢 Kembali ke AI Bawaan Offline (Rp0)');
+      }
+      if (settingsPanel) settingsPanel.classList.add('hidden');
+    });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('[App] Initializing OpenMontage Mobile...');
 
@@ -1552,6 +2380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupGeneralTemplates();
   setupBoosterGenerators();
   setupManualScriptEditor();
+  initAiAssistant();
 
   // Navigation tab bar listeners
   document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {

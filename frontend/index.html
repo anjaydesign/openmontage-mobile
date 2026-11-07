@@ -249,6 +249,52 @@
           </button>
         </div>
 
+                <!-- AI 5-Scene Auto-Generator Card -->
+        <div class="card ai-storyboard-card">
+          <div class="ai-card-header" id="btn-toggle-ai-generator" role="button" tabindex="0">
+            <div class="ai-badge-title">
+              <span class="badge badge-purple">✨ AI Assistant</span>
+              <strong>Susun 5 Scene Otomatis</strong>
+            </div>
+            <button type="button" class="btn btn-xs btn-outline" id="ai-gen-toggle-btn">
+              <span id="ai-gen-toggle-icon">▼</span> Buka AI
+            </button>
+          </div>
+          <div id="ai-generator-body" class="ai-card-body collapsed">
+            <p class="card-desc">Ketik ide atau produk Anda. AI akan otomatis merancang naskah 5 scene lengkap dengan animasi yang pas.</p>
+            <div class="form-group">
+              <label for="ai-global-topic-input">Ide Video / Topik / Produk</label>
+              <input type="text" id="ai-global-topic-input" class="form-input" placeholder="Contoh: Promo kopi susu gula aren beli 1 gratis 1 khusus hari ini...">
+            </div>
+            <div class="scene-row-controls">
+              <div class="form-group">
+                <label for="ai-global-niche-select">Format Alur Cerita</label>
+                <select id="ai-global-niche-select" class="form-select">
+                  <option value="promo">🔥 Promosi & Penjualan (Hook → Masalah → Solusi → Promo → CTA)</option>
+                  <option value="edukasi">💡 Edukasi & Tips Cepat (Hook → Fakta → Tips Inti → Manfaat → CTA)</option>
+                  <option value="kuliner">🍔 Kuliner & Makanan (Hook Rasa → Menu Andalan → Detail → Lokasi → CTA)</option>
+                  <option value="storytelling">📖 Cerita & Solusi (Curhat → Titik Balik → Solusi → Hasil → CTA)</option>
+                  <option value="jasa">🛠️ Jasa & Layanan (Masalah Klien → Layanan Ahli → Bukti → Jaminan → CTA)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="ai-global-tone-select">Gaya Bahasa</label>
+                <select id="ai-global-tone-select" class="form-select">
+                  <option value="hype">🎉 Heboh & Mendesak (Viral)</option>
+                  <option value="casual">☕ Santai & Akrab (Reels/TikTok)</option>
+                  <option value="pro">💼 Elegan & Terpercaya</option>
+                  <option value="curious">🔍 Bikin Penasaran (Hook Kuat)</option>
+                </select>
+              </div>
+            </div>
+            <div class="ai-actions-row">
+              <button type="button" id="btn-ai-generate-5-scenes" class="btn btn-primary btn-block">
+                ✨ Generate 5 Scene Lengkap
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- 5 Scenes Container -->
         <div id="scenes-editor-container" class="scenes-list">
           <!-- Populated by JS for Scenes 1 to 5 -->
@@ -453,6 +499,102 @@
         <button id="btn-close-render-modal" class="btn btn-secondary btn-block hidden">
           Tutup
         </button>
+      </div>
+    </div>
+  </div>
+
+    <!-- ========================================== -->
+  <!-- MODAL: ASISTEN AI SCENE                    -->
+  <!-- ========================================== -->
+  <div id="scene-ai-modal" class="modal-backdrop">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header">
+        <div class="modal-title-with-badge">
+          <span class="badge badge-purple">✨ AI Assistant</span>
+          <h3 id="modal-ai-scene-title">Bantuan AI untuk Scene 1</h3>
+        </div>
+        <button type="button" class="btn-close-modal" id="btn-close-ai-modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="ai-current-text-box">
+          <label class="text-dim">Teks Asli Scene:</label>
+          <div id="modal-ai-original-text" class="ai-original-text-content">Teks scene...</div>
+        </div>
+
+        <div class="form-group">
+          <label>Pilih Bantuan AI Cepat:</label>
+          <div class="ai-quick-grid">
+            <button type="button" class="btn-ai-action-card" data-action="hook">
+              <span class="action-icon">⚡</span>
+              <div class="action-text">
+                <strong>Buat Hook Viral</strong>
+                <small>Kalimat pembuka memikat</small>
+              </div>
+            </button>
+            <button type="button" class="btn-ai-action-card" data-action="shorten">
+              <span class="action-icon">🎯</span>
+              <div class="action-text">
+                <strong>Padatkan (9:16)</strong>
+                <small>Ringkas & mudah dibaca di HP</small>
+              </div>
+            </button>
+            <button type="button" class="btn-ai-action-card" data-action="cta">
+              <span class="action-icon">🛒</span>
+              <div class="action-text">
+                <strong>Jadikan CTA Kuat</strong>
+                <small>Ajakan beli / hubungi kami</small>
+              </div>
+            </button>
+            <button type="button" class="btn-ai-action-card" data-action="autostyle">
+              <span class="action-icon">🎨</span>
+              <div class="action-text">
+                <strong>Saran Animasi & Desain</strong>
+                <small>Pilih transisi & warna otomatis</small>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="ai-custom-prompt-input">Atau Perintahkan Bebas ke AI:</label>
+          <div class="input-with-button">
+            <input type="text" id="ai-custom-prompt-input" class="form-input" placeholder="Misal: Tambahkan emoji dan buat lebih mendesak...">
+            <button type="button" id="btn-submit-ai-prompt" class="btn btn-secondary btn-sm">Kirim</button>
+          </div>
+        </div>
+
+        <div class="ai-result-box" id="ai-result-box">
+          <div class="ai-result-header">
+            <span class="result-label">💡 Saran AI:</span>
+            <span id="ai-engine-badge" class="badge badge-emerald">Offline AI (Rp0)</span>
+          </div>
+          <textarea id="ai-suggestion-textarea" class="form-textarea" rows="3" placeholder="Hasil bantuan AI akan muncul di sini..."></textarea>
+          
+          <div id="ai-style-recommendation" class="ai-style-recommendation hidden">
+            <!-- Menampilkan rekomendasi animasi & warna jika ada -->
+          </div>
+        </div>
+
+        <div class="ai-engine-settings-toggle">
+          <button type="button" class="btn-text-link" id="btn-toggle-engine-settings">
+            ⚙️ Pengaturan Engine AI (Offline / Gemini)
+          </button>
+          <div id="ai-engine-settings-panel" class="ai-engine-panel hidden">
+            <div class="form-group">
+              <label for="ai-gemini-key-input">Google Gemini API Key (Opsional / Gratis):</label>
+              <input type="password" id="ai-gemini-key-input" class="form-input" placeholder="Kosongkan untuk menggunakan AI Bawaan 100% Offline (Rp0)">
+              <small class="text-dim">Kunci hanya disimpan di memori HP Anda (LocalStorage). Jika kosong, AI bawaan bekerja instan tanpa internet.</small>
+            </div>
+            <button type="button" id="btn-save-ai-key" class="btn btn-outline btn-xs">Simpan Kunci</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="btn-cancel-ai-modal">Batal</button>
+        <button type="button" class="btn btn-secondary" id="btn-regenerate-ai">🔄 Coba Variasi Lain</button>
+        <button type="button" class="btn btn-primary" id="btn-apply-ai-scene">✅ Terapkan ke Scene Ini</button>
       </div>
     </div>
   </div>

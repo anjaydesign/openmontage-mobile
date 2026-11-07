@@ -21,7 +21,13 @@
    - Generator Hook viral, Call to Action (CTA), judul video, dan caption media sosial dengan hashtag.
    - Konversi 1-klik dari naskah teks menjadi 5 scene storyboard otomatis.
 
-3. **5-Scene Storyboard & Visual Editor**
+3. **5-Scene Storyboard & Asisten AI Scene**
+   - **✨ Bantuan AI Per-Scene**: Tombol aksi cepat di setiap scene: *⚡ Hook Viral*, *🎯 Padatkan (9:16)*, *🛒 Jadikan CTA*, serta dialog perintah AI kustom.
+   - **🎨 AI Auto-Style**: Analisis otomatis konten teks untuk menentukan animasi transisi (*Fade, Slide Up, Slide Left, Ken-Burns, Bounce*), ukuran font, dan latar warna kontras yang paling harmonis.
+   - **✨ AI 5-Scene Generator**: Cukup ketik 1 topik atau ide produk, AI akan otomatis menyusun 5 scene lengkap (Hook → Masalah → Solusi → Bukti/Promo → CTA) dalam sekejap.
+   - **Dual Engine AI (Rp0)**: Berjalan 100% offline secara default tanpa API key, dengan opsi integrasi Google Gemini Cloud AI gratis jika diinginkan pengguna.
+   - Upload gambar langsung dari kamera atau galeri HP Android.
+   - Format video vertikal 9:16 yang pas untuk TikTok, Instagram Reels, dan YouTube Shorts.
    - Editor visual maksimal 5 scene vertikal 9:16.
    - Upload gambar langsung dari kamera atau galeri HP Android.
    - Pengaturan font, ukuran, warna, posisi teks, dan latar belakang badge kontras.

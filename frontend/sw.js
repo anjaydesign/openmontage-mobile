@@ -1,5 +1,5 @@
 // OpenMontage Mobile Service Worker - Offline Cache
-const CACHE_NAME = 'openmontage-v2.0';
+const CACHE_NAME = 'openmontage-v3.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
